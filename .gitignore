@@ -1,0 +1,15 @@
+# Rust
+/compiler/target/
+**/*.rs.bk
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+
+# Model weights and large artifacts
+*.safetensors
+*.bin
+*.pt
+*.gguf
