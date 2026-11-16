@@ -1,0 +1,15 @@
+[package]
+name = "phibi-kernels"
+version = "0.1.0"
+edition = "2024"
+
+# Standalone workspace: this crate is built by `cargo oxide` on the pinned
+# cuda-oxide toolchain, separately from `compiler/`.
+[workspace]
+
+[dependencies]
+# All three must come from the same cuda-rust revision; cuda-host depends on
+# cuda-core, and a second copy from crates.io would be a different crate.
+cuda-device = { git = "https://github.com/NVIDIA/cuda-rust.git", rev = "87851900e03b62e870ac985b6137c6d6dec3b20d" }
+cuda-host = { git = "https://github.com/NVIDIA/cuda-rust.git", rev = "87851900e03b62e870ac985b6137c6d6dec3b20d" }
+cuda-core = { git = "https://github.com/NVIDIA/cuda-rust.git", rev = "87851900e03b62e870ac985b6137c6d6dec3b20d" }

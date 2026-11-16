@@ -35,7 +35,13 @@ def parse_args():
     parser.add_argument("--model-id", default="Qwen/Qwen2.5-1.5B-Instruct")
     parser.add_argument("--mode", choices=("decode", "prefill"), default="decode")
     parser.add_argument("--dtype", choices=tuple(DTYPES), default="bf16")
-    parser.add_argument("--device", default="cuda")
+    parser.add_argument(
+        "--device",
+        default="cpu",
+        help="torch.export traces symbolically, so no kernels actually run and "
+        "the GPU buys nothing. CPU is the default so tracing does not compete "
+        "with whatever is resident in VRAM.",
+    )
     parser.add_argument(
         "--max-cache-len",
         type=int,
@@ -203,6 +209,7 @@ def build_static_cache_module(model, opts, dtype):
         "max_batch_size": 1,
         "batch_size": 1,
         "max_cache_len": opts.max_cache_len,
+        "device": opts.device,
     }
     accepted = inspect.signature(TorchExportableModuleWithStaticCache).parameters
     kwargs = {k: v for k, v in optional.items() if k in accepted}
@@ -224,9 +231,14 @@ def export_decode(model, opts, dtype):
         opts.device
     )
 
+    # The wrapper's forward is (input_ids, inputs_embeds, cache_position), so
+    # cache_position has to go by keyword or it lands in inputs_embeds.
     with torch.no_grad():
         exported_program = torch.export.export(
-            wrapped, args=(token, cache_position), strict=True
+            wrapped,
+            args=(token,),
+            kwargs={"cache_position": cache_position},
+            strict=True,
         )
 
     return exported_program, {
